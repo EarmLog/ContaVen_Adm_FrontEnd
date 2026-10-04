@@ -27,6 +27,8 @@ export function ProveedorAdmin({ children }) {
   const [sesion, setSesion] = useState(null)     // sesión de Supabase
   const [autorizado, setAutorizado] = useState(false)  // ¿es administrador?
   const [admin, setAdmin] = useState(null)       // datos del administrador
+  // Mensaje cuando el backend no respondió (fallo de red, no de permisos)
+  const [errorConexion, setErrorConexion] = useState('')
 
   // --- Estado de la lista de usuarios ---
   const [usuarios, setUsuarios] = useState([])
@@ -62,10 +64,20 @@ export function ProveedorAdmin({ children }) {
         if (montado) {
           setAutorizado(datos.autorizado)
           setAdmin(datos)
+          setErrorConexion('')
         }
-      } catch {
-        // Si el backend responde que no está autorizado, no se deja entrar
-        if (montado) setAutorizado(false)
+      } catch (error) {
+        if (!montado) return
+
+        // Un fallo de red NO significa que el correo esté en la lista negra:
+        // significa que el servidor no respondió. Antes se mostraba el aviso
+        // de "no autorizado", que hacía creer que el acceso estaba denegado.
+        if (error.sinConexion) {
+          setErrorConexion(error.message)
+          setAutorizado(false)
+        } else {
+          setAutorizado(false)
+        }
       } finally {
         if (montado) setCargando(false)
       }
@@ -150,6 +162,7 @@ export function ProveedorAdmin({ children }) {
         sesion,               // sesión activa o null
         admin,                // datos del administrador
         autorizado,           // true si su correo está en la lista
+        errorConexion,         // mensaje si el backend no respondió
         usuarios,             // lista de usuarios
         resumen,              // cifras del panel
         cargandoUsuarios,     // true mientras carga la tabla

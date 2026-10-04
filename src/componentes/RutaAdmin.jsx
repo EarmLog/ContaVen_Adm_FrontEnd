@@ -19,7 +19,7 @@ import { useAdmin } from '../SesionAdmin'
  */
 export default function RutaAdmin({ children }) {
   // Se traen los datos de la sesión del administrador
-  const { cargando, estaLogueado, autorizado, admin, salir } = useAdmin()
+  const { cargando, estaLogueado, autorizado, admin, salir, errorConexion } = useAdmin()
 
   // Mientras se revisa la sesión se muestra el spinner
   if (cargando) {
@@ -35,12 +35,51 @@ export default function RutaAdmin({ children }) {
     return <Navigate to="/login" replace />
   }
 
+  // Si tiene sesión pero el backend no respondió, no es un problema de permisos
+  if (errorConexion) {
+    return <SinConexion mensaje={errorConexion} />
+  }
+
   // Si tiene sesión pero no está autorizado en la lista de administradores
   if (!autorizado) {
     return <SinPermisos correo={admin?.correo} alSalir={salir} />
   }
 
   return children
+}
+
+/**
+ * Pantalla que se muestra cuando el backend no responde.
+ * Antes se confundía con "no tienes permisos", así que se distingue claro.
+ * @param {object} props - { mensaje }
+ * @returns {JSX.Element}
+ */
+function SinConexion({ mensaje }) {
+  return (
+    <div className="grid min-h-screen place-items-center p-4">
+      <div className="tarjeta w-full max-w-md p-8 text-center">
+        <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-full bg-amber-100 text-3xl">
+          🔌
+        </div>
+
+        <h1 className="text-xl font-semibold">Sin conexión con el servidor</h1>
+
+        <p className="mt-3 text-sm texto-suave">{mensaje}</p>
+
+        <p className="mt-4 text-sm texto-suave">
+          Tu sesión sigue activa. Es un problema para poder contactar al servidor de
+          administración, no con tus permisos.
+        </p>
+
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-6 w-full rounded-lg bg-marca-600 py-2.5 text-sm font-medium text-white transition hover:bg-marca-700"
+        >
+          Volver a intentar
+        </button>
+      </div>
+    </div>
+  )
 }
 
 /**

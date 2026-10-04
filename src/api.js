@@ -9,8 +9,18 @@
 
 import supabase from './supabase'
 
-// Dirección del backend Flask de admin, tomada del archivo .env
-const URL_API = import.meta.env.VITE_URL_API || 'http://localhost:5002'
+// Dirección del backend Flask de admin, tomada del archivo .env.
+// Sin este valor no hay forma de saber a qué backend llamar, así que se
+// avisa al arrancar en vez de apuntar en silencio a localhost: en producción
+// eso hacía que el login pareciera fallido sin motivo claro.
+const URL_API = (import.meta.env.VITE_URL_API || '').replace(/\/$/, '')
+
+if (!URL_API) {
+  console.error(
+    'Falta VITE_URL_API: no se sabe a qué backend llamar. ' +
+      'Cópiala en el archivo .env y vuelve a construir la app.',
+  )
+}
 
 /**
  * Devuelve el token de sesión del administrador que está logueado.
@@ -37,14 +47,26 @@ async function llamarApi(ruta, opciones = {}) {
   }
 
   // Se hace la petición
-  const respuesta = await fetch(`${URL_API}/api${ruta}`, {
-    method: opciones.metodo || 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    ...(opciones.cuerpo ? { body: JSON.stringify(opciones.cuerpo) } : {}),
-  })
+  let respuesta
+
+  try {
+    respuesta = await fetch(`${URL_API}/api${ruta}`, {
+      method: opciones.metodo || 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      ...(opciones.cuerpo ? { body: JSON.stringify(opciones.cuerpo) } : {}),
+    })
+  } catch {
+    // El backend no respondió: no es un problema de credenciales, así que
+    // se dice explícitamente para que nadie piense que el login está mal.
+    const error = new Error(
+      'No se pudo conectar con el servidor de administración. Revisa tu conexión a internet e inténtalo de nuevo.',
+    )
+    error.sinConexion = true
+    throw error
+  }
 
   // Se lee la respuesta
   const datos = await respuesta.json().catch(() => ({}))
