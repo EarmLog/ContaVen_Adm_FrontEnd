@@ -1,46 +1,38 @@
+'use client'
+
 /*
  * (RutaAdmin.jsx)
- * Envuelve el panel de administración y revisa que quien entra
- * sea un administrador autorizado en Supabase.
- *
- * Si no hay sesión, lo manda al login.
- * Si hay sesión pero su correo no está en la tabla de administradores,
- * le muestra que no tiene permisos.
+ * Protege el panel de administración (Next.js).
  */
 
-import { Navigate } from 'react-router-dom'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
-import { useAdmin } from '../SesionAdmin'
+import { useAdmin } from '@/context/AdminContext'
+import Cargando from '@/components/ui/Cargando'
 
-/**
- * Revisa si el usuario puede ver el panel de administración.
- * @param {object} props - { children }
- * @returns {JSX.Element}
- */
 export default function RutaAdmin({ children }) {
-  // Se traen los datos de la sesión del administrador
+  const router = useRouter()
   const { cargando, estaLogueado, autorizado, admin, salir, errorConexion } = useAdmin()
 
-  // Mientras se revisa la sesión se muestra el spinner
+  useEffect(() => {
+    if (!cargando && !estaLogueado) {
+      router.replace('/login')
+    }
+  }, [cargando, estaLogueado, router])
+
   if (cargando) {
-    return (
-      <div className="grid min-h-screen place-items-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-marca-200 border-t-marca-600" />
-      </div>
-    )
+    return <Cargando />
   }
 
-  // Si no hay sesión se lo manda al login de admin
   if (!estaLogueado) {
-    return <Navigate to="/login" replace />
+    return <Cargando />
   }
 
-  // Si tiene sesión pero el backend no respondió, no es un problema de permisos
   if (errorConexion) {
     return <SinConexion mensaje={errorConexion} />
   }
 
-  // Si tiene sesión pero no está autorizado en la lista de administradores
   if (!autorizado) {
     return <SinPermisos correo={admin?.correo} alSalir={salir} />
   }
@@ -48,12 +40,6 @@ export default function RutaAdmin({ children }) {
   return children
 }
 
-/**
- * Pantalla que se muestra cuando el backend no responde.
- * Antes se confundía con "no tienes permisos", así que se distingue claro.
- * @param {object} props - { mensaje }
- * @returns {JSX.Element}
- */
 function SinConexion({ mensaje }) {
   return (
     <div className="grid min-h-screen place-items-center p-4">
@@ -82,12 +68,6 @@ function SinConexion({ mensaje }) {
   )
 }
 
-/**
- * Pantalla que se muestra cuando el correo no está autorizado
- * como administrador en la tabla de Supabase.
- * @param {object} props - { correo, alSalir }
- * @returns {JSX.Element}
- */
 function SinPermisos({ correo, alSalir }) {
   return (
     <div className="grid min-h-screen place-items-center p-4">

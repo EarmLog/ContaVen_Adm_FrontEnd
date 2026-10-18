@@ -1,54 +1,41 @@
+'use client'
+
 /*
- * (LoginAdmin.jsx)
- * Pantalla de inicio de sesión de la app de ADMINISTRACIÓN.
- *
- * Solo tiene dos campos: correo y contraseña.
- * Después de entrar, el backend revisa si ese correo está en la tabla
- * de administradores de Supabase. Si no está, no puede entrar al panel.
+ * (login/page.jsx)
+ * Pantalla de inicio de sesión del panel de administración (Next.js).
  */
 
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
-import * as api from '../api'
-import Aviso from '../componentes/Aviso'
-import { useAdmin } from '../SesionAdmin'
+import * as api from '@/lib/api'
+import Aviso from '@/components/ui/Aviso'
+import { useAdmin } from '@/context/AdminContext'
 
-/**
- * Componente con el formulario de login del administrador.
- * @returns {JSX.Element}
- */
-export default function LoginAdmin() {
-  // --- Estado del formulario ---
+export default function LoginPage() {
   const [datos, setDatos] = useState({ correo: '', contrasena: '' })
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [verContrasena, setVerContrasena] = useState(false)
 
-  // Para pasar al panel cuando el login sale bien
-  const navegar = useNavigate()
+  const router = useRouter()
+  const { estaLogueado, autorizado, cargando, entrar } = useAdmin()
 
-  // Se trae la función de entrar del contexto
-  const { entrar } = useAdmin()
+  useEffect(() => {
+    if (!cargando && estaLogueado && autorizado) {
+      router.replace('/')
+    }
+  }, [cargando, estaLogueado, autorizado, router])
 
-  /**
-   * Escribe un valor en un campo del formulario.
-   * @param {object} evento - El evento del input
-   */
   function manejarCambio(evento) {
     const { name, value } = evento.target
     setDatos((anterior) => ({ ...anterior, [name]: value }))
   }
 
-  /**
-   * Revisa los campos y luego intenta iniciar sesión.
-   * @param {object} evento - El evento del formulario
-   */
   async function manejarEnvio(evento) {
     evento.preventDefault()
     setError('')
 
-    // Se revisa que los dos campos estén llenos
     if (!datos.correo || !datos.contrasena) {
       setError('Completa el correo y la contraseña.')
       return
@@ -57,14 +44,9 @@ export default function LoginAdmin() {
     setEnviando(true)
 
     try {
-      // Se inicia sesión en Supabase
       const datosSesion = await api.iniciarSesion(datos.correo.trim(), datos.contrasena)
-
-      // Se guarda la sesión y se revisa si es administrador
       await entrar(datosSesion)
-
-      // Si llegó hasta aquí, el correo sí está autorizado
-      navegar('/', { replace: true })
+      router.replace('/')
     } catch (errorLogin) {
       setError(errorLogin.message)
     } finally {
@@ -75,8 +57,6 @@ export default function LoginAdmin() {
   return (
     <div className="grid min-h-screen place-items-center p-4">
       <div className="w-full max-w-md">
-
-        {/* --- Encabezado con el logo --- */}
         <div className="mb-6 text-center">
           <div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-xl bg-slate-800 text-xl font-bold text-white">
             CV
@@ -85,13 +65,9 @@ export default function LoginAdmin() {
           <p className="mt-1 text-sm texto-suave">Panel de control de usuarios y licencias</p>
         </div>
 
-        {/* --- Formulario de login --- */}
         <form onSubmit={manejarEnvio} className="tarjeta space-y-4 p-6">
-
-          {/* Mensaje de error si algo salió mal */}
           <Aviso tipo="error" mensaje={error} alCerrar={() => setError('')} />
 
-          {/* Campo del correo */}
           <div>
             <label htmlFor="correo" className="mb-1 block text-sm font-medium">
               Correo de administrador
@@ -108,7 +84,6 @@ export default function LoginAdmin() {
             />
           </div>
 
-          {/* Campo de la contraseña */}
           <div>
             <label htmlFor="contrasena" className="mb-1 block text-sm font-medium">
               Contraseña
@@ -134,7 +109,6 @@ export default function LoginAdmin() {
             </div>
           </div>
 
-          {/* Botón de entrar */}
           <button
             type="submit"
             disabled={enviando}

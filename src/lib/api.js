@@ -1,23 +1,18 @@
 /*
  * (api.js)
- * Cliente de la API del backend Flask de ADMINISTRACIÓN.
+ * Cliente de la API del backend Flask de ADMINISTRACIÓN (Next.js).
  *
  * Todas las llamadas llevan el token de sesión del administrador.
- * El backend revisa que el correo esté en la tabla de administradores
- * de Supabase antes de dejarle ver o modificar cualquier cosa.
+ * El backend revisa que el correo esté en la tabla de administradores.
  */
 
-import supabase from './supabase'
+import supabase from './supabaseClient'
 
-// Dirección del backend Flask de admin, tomada del archivo .env.
-// Sin este valor no hay forma de saber a qué backend llamar, así que se
-// avisa al arrancar en vez de apuntar en silencio a localhost: en producción
-// eso hacía que el login pareciera fallido sin motivo claro.
-const URL_API = (import.meta.env.VITE_URL_API || '').replace(/\/$/, '')
+const URL_API = (process.env.NEXT_PUBLIC_URL_API || '').replace(/\/$/, '')
 
 if (!URL_API) {
   console.error(
-    'Falta VITE_URL_API: no se sabe a qué backend llamar. ' +
+    'Falta NEXT_PUBLIC_URL_API: no se sabe a qué backend llamar. ' +
       'Cópiala en el archivo .env y vuelve a construir la app.',
   )
 }
@@ -38,15 +33,12 @@ export async function obtenerToken() {
  * @returns {object} - La respuesta en JSON
  */
 async function llamarApi(ruta, opciones = {}) {
-  // Se consigue el token del administrador
   const token = await obtenerToken()
 
-  // Si no hay token se corta aquí
   if (!token) {
     throw new Error('No has iniciado sesión como administrador.')
   }
 
-  // Se hace la petición
   let respuesta
 
   try {
@@ -59,8 +51,6 @@ async function llamarApi(ruta, opciones = {}) {
       ...(opciones.cuerpo ? { body: JSON.stringify(opciones.cuerpo) } : {}),
     })
   } catch {
-    // El backend no respondió: no es un problema de credenciales, así que
-    // se dice explícitamente para que nadie piense que el login está mal.
     const error = new Error(
       'No se pudo conectar con el servidor de administración. Revisa tu conexión a internet e inténtalo de nuevo.',
     )
@@ -68,10 +58,8 @@ async function llamarApi(ruta, opciones = {}) {
     throw error
   }
 
-  // Se lee la respuesta
   const datos = await respuesta.json().catch(() => ({}))
 
-  // Si el backend devuelve un error se lanza con su mensaje
   if (!respuesta.ok) {
     throw new Error(datos.error || 'Ocurrió un error. Intenta de nuevo.')
   }

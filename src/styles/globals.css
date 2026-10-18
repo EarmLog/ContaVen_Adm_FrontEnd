@@ -1,14 +1,14 @@
 /*
- * (index.css)
- * Hojas de estilo globales de la app de administración de ContaVen.
+ * (globals.css)
+ * Hojas de estilo globales del panel de administración de ContaVen.
  *
  * TailwindCSS v4 se importa con @import "tailwindcss".
- * La app es de color claro (modo claro por defecto).
+ * El panel arranca en modo claro (es el predeterminado de ContaVen).
+ * Aquí se definen los colores y estilos base.
  */
 
 @import "tailwindcss";
 
-/* Colores y estilos base del panel de administración */
 @theme {
   /* Color principal de ContaVen */
   --color-marca-50: #eef6ff;
@@ -22,16 +22,15 @@
   --color-marca-800: #1943a1;
   --color-marca-900: #1a3c81;
 
-  /* Color de éxito */
+  /* Color de éxito (licencias activas) */
   --color-exito-500: #16a34a;
   --color-exito-600: #15803d;
 
-  /* Color de error */
+  /* Color de error (bloqueados) */
   --color-error-500: #dc2626;
   --color-error-600: #b91c1c;
 }
 
-/* Colores base de la app (siempre en modo claro) */
 @layer base {
   :root {
     --fondo: #f4f6fa;
@@ -48,7 +47,7 @@
   }
 }
 
-/* Tarjeta blanca con borde suave */
+/* Tarjeta blanca con borde suave, usada en casi todas las secciones */
 @utility tarjeta {
   background-color: var(--superficie);
   border: 1px solid var(--borde);
@@ -56,7 +55,7 @@
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
 }
 
-/* Texto de color suave */
+/* Texto de color suave para textos secundarios */
 @utility texto-suave {
   color: var(--texto-suave);
 }

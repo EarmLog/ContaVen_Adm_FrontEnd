@@ -1,45 +1,31 @@
+'use client'
+
 /*
  * (ModalLicencia.jsx)
- * Ventana que aparece cuando el administrador quiere cambiar la licencia
- * de un usuario: agregarle días, bloquearle o desbloquearle el acceso.
+ * Ventana para cambiar la licencia de un usuario.
  */
 
 import { useState } from 'react'
 
-/**
- * Modal para modificar la licencia de un usuario.
- * @param {object} props - { usuario, alCerrar, alGuardar }
- * @returns {JSX.Element}
- */
 export default function ModalLicencia({ usuario, alCerrar, alGuardar }) {
-  // --- Estado del formulario ---
   const [dias, setDias] = useState(30)
   const [motivo, setMotivo] = useState('')
   const [accion, setAccion] = useState(usuario.bloqueado ? 'desbloquear' : 'bloquear')
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState('')
 
-  // Atajos para agregar días comunes
   const PAQUETES = [7, 15, 30, 60, 90]
 
-  /**
-   * Cierra el modal cuando se presiona la tecla Escape.
-   */
   function manejarEscape(evento) {
     if (evento.key === 'Escape') alCerrar()
   }
 
-  /**
-   * Envía el cambio de licencia al backend.
-   * @param {object} evento - El evento del formulario
-   */
   async function manejarEnvio(evento) {
     evento.preventDefault()
     setError('')
     setGuardando(true)
 
     try {
-      // Se arma lo que se va a enviar según la acción elegida
       const cambios = {}
 
       if (accion === 'bloquear') {
@@ -75,8 +61,6 @@ export default function ModalLicencia({ usuario, alCerrar, alGuardar }) {
       onKeyDown={manejarEscape}
     >
       <div className="tarjeta w-full max-w-lg p-6">
-
-        {/* --- Encabezado del modal --- */}
         <div className="flex items-start justify-between">
           <div>
             <h2 className="text-lg font-semibold">Licencia de {usuario.nombre}</h2>
@@ -91,7 +75,6 @@ export default function ModalLicencia({ usuario, alCerrar, alGuardar }) {
           </button>
         </div>
 
-        {/* --- Estado actual del usuario --- */}
         <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
           <div className="rounded-lg border border-[var(--borde)] p-3">
             <p className="texto-suave">Días restantes</p>
@@ -105,17 +88,13 @@ export default function ModalLicencia({ usuario, alCerrar, alGuardar }) {
           </div>
         </div>
 
-        {/* --- Formulario --- */}
         <form onSubmit={manejarEnvio} className="mt-5 space-y-4">
-
-          {/* Mensaje de error */}
           {error && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               {error}
             </div>
           )}
 
-          {/* Selector de la acción */}
           <div>
             <label className="mb-2 block text-sm font-medium">¿Qué quieres hacer?</label>
             <div className="space-y-2">
@@ -143,7 +122,6 @@ export default function ModalLicencia({ usuario, alCerrar, alGuardar }) {
             </div>
           </div>
 
-          {/* El motivo se escribe solo si se va a bloquear */}
           {accion === 'bloquear' && (
             <div>
               <label className="mb-1 block text-sm font-medium">Motivo del bloqueo</label>
@@ -160,7 +138,6 @@ export default function ModalLicencia({ usuario, alCerrar, alGuardar }) {
             </div>
           )}
 
-          {/* La cantidad de días se muestra solo si se van a agregar */}
           {accion === 'agregar_dias' && (
             <div>
               <label className="mb-1 block text-sm font-medium">Cantidad de días</label>
@@ -172,7 +149,6 @@ export default function ModalLicencia({ usuario, alCerrar, alGuardar }) {
                 className="campo max-w-[10rem]"
               />
 
-              {/* Botones para elegir un paquete rápido */}
               <div className="mt-2 flex flex-wrap gap-2">
                 {PAQUETES.map((paquete) => (
                   <button
@@ -192,7 +168,6 @@ export default function ModalLicencia({ usuario, alCerrar, alGuardar }) {
             </div>
           )}
 
-          {/* Botones del modal */}
           <div className="flex gap-3 pt-2">
             <button
               type="submit"
@@ -218,11 +193,6 @@ export default function ModalLicencia({ usuario, alCerrar, alGuardar }) {
   )
 }
 
-/**
- * Una opción del selector de acciones (con su radio button).
- * @param {object} props - { valor, actual, onChange, titulo, descripcion }
- * @returns {JSX.Element}
- */
 function OpcionAccion({ valor, actual, onChange, titulo, descripcion }) {
   return (
     <label
