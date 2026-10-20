@@ -1,0 +1,9 @@
+{
+  "appId": "com.contaven.admin",
+  "appName": "ContaVen Admin",
+  "webDir": "out",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}

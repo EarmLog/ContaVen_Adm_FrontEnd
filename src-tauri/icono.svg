@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="fondo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3182f6"/>
+      <stop offset="1" stop-color="#1c62e9"/>
+    </linearGradient>
+    <linearGradient id="brillo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#59a5ff"/>
+      <stop offset="1" stop-color="#174ec6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Fondo redondeado -->
+  <rect x="0" y="0" width="512" height="512" rx="112" fill="url(#fondo)"/>
+
+  <!-- Escudo (panel de administración) -->
+  <path d="M256 84 L392 140 V262 C392 344 330 408 256 432 C182 408 120 344 120 262 V140 Z"
+        fill="url(#brillo)" opacity="0.28"/>
+  <path d="M256 84 L392 140 V262 C392 344 330 408 256 432 C182 408 120 344 120 262 V140 Z"
+        fill="none" stroke="#ffffff" stroke-width="10" opacity="0.4"/>
+
+  <!-- Letras CV -->
+  <text x="256" y="252" font-family="Segoe UI, Arial, sans-serif" font-size="168"
+        font-weight="700" fill="#ffffff" text-anchor="middle" dominant-baseline="central"
+        letter-spacing="-8">CV</text>
+</svg>

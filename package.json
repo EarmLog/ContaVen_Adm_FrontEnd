@@ -7,16 +7,24 @@
     "dev": "next dev -p 5174",
     "build": "next build",
     "preview": "npx serve out",
+    "tauri": "tauri",
+    "android:add": "cap add android",
+    "android:sync": "npm run build && cap sync android",
+    "android:open": "cap open android",
     "lint": "oxlint"
   },
   "dependencies": {
+    "@capacitor/core": "^6.2.0",
     "@supabase/supabase-js": "^2.117.2",
     "next": "^15.5.4",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
   "devDependencies": {
+    "@capacitor/android": "^6.2.2",
+    "@capacitor/cli": "^6.2.2",
     "@tailwindcss/postcss": "^4.3.3",
+    "@tauri-apps/cli": "^2.12.3",
     "oxlint": "^1.81.0",
     "tailwindcss": "^4.3.3"
   }

@@ -1,0 +1,77 @@
+name: Empaquetar el panel de Admin (Tauri)
+
+# Genera los instaladores de escritorio del panel de administración de
+# ContaVen y los publica como "release" en GitHub, para descargarlos y
+# ejecutarlos directamente.
+#
+#   - Windows: instalador .exe (NSIS) y .msi
+#   - Linux:   .AppImage (se ejecuta con doble clic), .deb y .rpm
+#   - macOS:   .dmg
+#
+# Se puede lanzar a mano (workflow_dispatch) o al subir una etiqueta "v*".
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  empaquetar:
+    name: Empaquetar (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - name: Bajar el código
+        uses: actions/checkout@v4
+
+      - name: Usar Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Instalar Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Guardar la caché de Rust
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Dependencias de Linux (para Tauri)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            build-essential \
+            curl \
+            wget \
+            file
+
+      - name: Instalar dependencias de la web
+        run: npm ci
+
+      - name: Empaquetar y publicar el release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+          NEXT_PUBLIC_URL_API: ${{ secrets.NEXT_PUBLIC_URL_API }}
+        with:
+          tauriScript: npx tauri
+          tagName: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', github.run_number) }}
+          releaseName: 'ContaVen Admin ${{ github.ref_type == ''tag'' && github.ref_name || github.run_number }}'
+          releaseBody: 'Descarga el instalador de tu sistema y ejecútalo. En Linux usa el .AppImage; en Windows el .exe.'
+          releaseDraft: false
+          prerelease: false

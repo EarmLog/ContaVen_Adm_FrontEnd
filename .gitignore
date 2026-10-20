@@ -36,3 +36,11 @@ next-env.d.ts
 
 # Vercel
 .vercel
+
+# Nativo (Tauri / Capacitor)
+src-tauri/target
+src-tauri/gen
+android/app/build
+android/build
+android/.gradle
+android/local.properties

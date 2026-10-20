@@ -1,0 +1,89 @@
+name: Empaquetar el panel de Admin (APK)
+
+# Genera el APK del panel de administración de ContaVen y lo publica como
+# "release" en GitHub, para instalarlo en un teléfono o tablet.
+#
+# Se puede lanzar a mano (workflow_dispatch) o al subir una etiqueta "v*".
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  empaquetar:
+    name: Empaquetar APK
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Bajar el código
+        uses: actions/checkout@v4
+
+      - name: Usar Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Usar Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Preparar el Android SDK
+        # Los runners de Ubuntu ya traen el Android SDK instalado, así que
+        # solo activamos las rutas y los paquetes que Capacitor necesita.
+        run: |
+          SDK="/usr/local/lib/android/sdk"
+          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
+          # sdkmanager vive dentro de cmdline-tools/<versión>/bin; se busca
+          # la carpeta que exista, sin importar el número de versión.
+          SDKMGR="$(ls "$SDK"/cmdline-tools/*/bin/sdkmanager 2>/dev/null | head -n 1)"
+          echo "Usando $SDKMGR"
+          echo "$(dirname "$SDKMGR")" >> "$GITHUB_PATH"
+          echo "$SDK/platform-tools" >> "$GITHUB_PATH"
+          yes | "$SDKMGR" --licenses > /dev/null 2>&1 || true
+          "$SDKMGR" "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Compilar la web (export estático)
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+          NEXT_PUBLIC_URL_API: ${{ secrets.NEXT_PUBLIC_URL_API }}
+
+      - name: Generar el proyecto Android (si no existe)
+        run: |
+          if [ ! -d "android" ]; then
+            npx cap add android
+          fi
+
+      - name: Sincronizar la web con Android
+        run: npx cap sync android
+
+      - name: Compilar el APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Renombrar el APK
+        run: |
+          mkdir -p salida
+          cp android/app/build/outputs/apk/debug/app-debug.apk salida/ContaVen-Admin.apk
+
+      - name: Publicar el APK en el release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}-android', github.run_number) }}
+          name: 'ContaVen Admin Android ${{ github.ref_type == ''tag'' && github.ref_name || github.run_number }}'
+          body: 'Descarga el APK, ábrelo en tu teléfono o tablet y acepta la instalación de apps de origen desconocido.'
+          files: salida/ContaVen-Admin.apk
+          fail_on_unmatched_files: true
